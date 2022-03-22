@@ -6,7 +6,7 @@ import 'app_data.dart';
 class MusicItemView extends StatefulWidget {
   MusicItemView({Key? key, required this.songs, required this.index}) : super(key: key);
   List<SongInfo> songs;
-  int index = 0;
+  int index = 0 ;
   @override
   State<MusicItemView> createState() => _MusicItemViewState();
 }

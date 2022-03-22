@@ -23,14 +23,9 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    getSong();
+    //getSong();
   }
-  Future getSong() async{
-    songInfo= await audioQuery.getSongs();
-    setState(() {
-      songInfo=songInfo;
-    });
-  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -71,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                 );
               }
               return Column(
-                children: List.generate(5, (index) => MusicItemView(songs: songInfo, index: index,)),
+                children: List.generate(5, (index) => MusicItemView(songs: item.data!, index: index,)),
               );
             },
           ),

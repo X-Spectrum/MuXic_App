@@ -20,26 +20,28 @@ class musicPlayer extends StatefulWidget {
 }
 
 class _musicPlayerState extends State<musicPlayer> {
-  double minimumValue = 0.0, maximumValue = 0.0, currentValue = 0.0;
+  double minimumValue = 0.0, maximumValue = .0, currentValue = 0.0;
   String currentTime = '00:00', endTime = '00:00';
   bool isPlaying = false;
+  bool checkModalSheet = false;
   final AudioPlayer player = AudioPlayer();
 
   void initState() {
     super.initState();
+    player.load();
     setSong(widget.songs[widget.index]);
   }
 
   void dispose() {
     super.dispose();
-    player.dispose();
+    //player.stop();
   }
 
   void setSong(SongInfo songInfo) async {
     widget.songs[widget.index] = songInfo;
     await player.setUrl(widget.songs[widget.index].uri);
     currentValue = minimumValue;
-    maximumValue = player.duration!.inMilliseconds.toDouble();
+    maximumValue = (currentValue > maximumValue) ? maximumValue = currentValue : player.duration!.inMilliseconds.toDouble();
     setState(() {
       currentTime = getDuration(currentValue);
       endTime = getDuration(maximumValue);
@@ -47,7 +49,12 @@ class _musicPlayerState extends State<musicPlayer> {
     isPlaying = false;
     changeStatus();
     player.positionStream.listen((duration) {
-      currentValue = duration.inMilliseconds.toDouble();
+      setState(() {
+        if (currentValue == maximumValue){
+          changeTrack(true);
+        }
+      });
+      currentValue = (duration.inMilliseconds.toDouble() < maximumValue)? duration.inMilliseconds.toDouble(): maximumValue;
       setState(() {
         currentTime = getDuration(currentValue);
       });
@@ -94,13 +101,74 @@ class _musicPlayerState extends State<musicPlayer> {
         });
       }
     } else {
-      if (widget.index != 0) {
-        setState(() {
-          widget.index--;
-        });
+      if (currentValue >= minimumValue + 3000.0){
+        currentValue = minimumValue;
+      }else{
+        if (widget.index != 0) {
+          setState(() {
+            widget.index--;
+          });
+        }
       }
     }
     setSong(widget.songs[widget.index]);
+  }
+
+  void _showModalBottomSheet(BuildContext context){
+    showModalBottomSheet<void>(
+      backgroundColor: Colors.transparent,
+
+      /*enableDrag: true,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30.0),
+      ),*/
+      context: context,
+      builder: (context){
+        return Container(
+          padding: EdgeInsets.only(top: 15),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(30),),
+            color: firstColor
+          ),
+          child: ListView.builder(
+              itemCount: widget.songs.length,
+              itemBuilder: (context, index) => Container(
+                padding: EdgeInsets.symmetric(horizontal: 5.0),
+                child: ListTile(
+                  leading: (widget.songs[index].albumArtwork == null) ?
+                  Container(
+                      width: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                      height: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15.0),
+                        color: secondColor,
+                      ),
+                      child: const Icon(
+                        Icons.music_note_rounded,
+                        color: Colors.grey,
+                        size: 30,)
+                  ):
+                  const Image(image: AssetImage("assets/Girl.webp")),
+                  title: Text(widget.songs[index].title, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+                  subtitle: Text(widget.songs[index].artist, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300)),
+                  trailing: IconButton(
+                    onPressed: (){},
+                    icon: const Icon(Icons.more_vert_rounded, color: Colors.white,),
+                  ),
+                  onTap: (){
+                    Navigator.pop(context);
+                    setSong(widget.songs[index]);
+                  },
+                  contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                ),
+              )
+            ),
+        );
+      }
+    );
   }
 
   @override
@@ -314,6 +382,8 @@ class _musicPlayerState extends State<musicPlayer> {
                   height: MediaQuery.of(context).size.height / 8,
                   child: TextButton(
                     onPressed: (){
+                      _showModalBottomSheet(context);
+                      checkModalSheet = true;
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -336,7 +406,7 @@ class _musicPlayerState extends State<musicPlayer> {
               )
             ],
         )
-
     );
   }
 }
+

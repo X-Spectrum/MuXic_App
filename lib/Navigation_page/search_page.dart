@@ -54,7 +54,7 @@ class _SearchPageState extends State<SearchPage> {
                     )
                 ),
               ),
-              SizedBox(height: MediaQuery.of(context).size.height/30,),
+              SizedBox(height: MediaQuery.of(context).size.height/35,),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(

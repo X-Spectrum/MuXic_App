@@ -13,6 +13,7 @@ class FolderListPage extends StatefulWidget {
 
 class _FolderListPageState extends State<FolderListPage> {
   FlutterAudioQuery audioQuery = FlutterAudioQuery();
+  List<String> paths = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,11 +47,59 @@ class _FolderListPageState extends State<FolderListPage> {
                     color: firstColor,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  child: const Text(
-                    "Dossiers",
-                    style: TextStyle(
-                      color: Colors.white,
-                    ),
+                  child: FutureBuilder<List<SongInfo>>(
+                    future: audioQuery.getSongs(),
+                    builder: (context, item){
+                      if(item.data == null){
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if(item.data!.isNotEmpty){
+                        String path = "";
+                        for(int i=0; i < item.data!.length; i++){
+
+                          path = item.data![i].filePath.split(item.data![i].displayName).first;
+                          path = path.replaceFirst("/", "", path.length-1);
+
+                          if(!paths.contains(path)){
+                            paths.add(path);
+                          }
+                        }
+                        return ListView.builder(
+                          itemCount: paths.length,
+                          itemBuilder: (context, index) => Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5.0),
+                            child: ListTile(
+                              leading: Container(
+                                  width: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                                  height: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(15.0),
+                                    color: secondColor,
+                                  ),
+                                  child: const Icon(
+                                    Icons.folder_rounded,
+                                    color: Colors.grey,
+                                    size: 30,)
+                              ),
+                              title: Text(paths[index].split("/").last, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
+                              subtitle: Text(paths[index], overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300)),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      return const Text(
+                        "Aucune chanson trouvée",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      );
+                    },
                   )
               ),
             )
