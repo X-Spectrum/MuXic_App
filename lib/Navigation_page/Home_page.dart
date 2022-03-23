@@ -9,9 +9,9 @@ import '../musicItemView.dart';
 import '../playlistItemView.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({ Key? key, /*required this.moveToPage*/}) : super(key: key);
+  HomePage({ Key? key, required this.setHomeState}) : super(key: key);
 
-  //final Function(int index) moveToPage;
+  Function setHomeState;
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -37,12 +37,12 @@ class _HomePageState extends State<HomePage> {
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: List.generate(3, (index) => const Playlist()),
+              children: List.generate(3, (index) => const PlaylistItem()),
             ),
           ),
         ),
         SliverToBoxAdapter(child: TextBox(title: "Musiques", fun: (){
-          //widget.moveToPage(1);
+          widget.setHomeState(1, 1, "");
         },)),
         SliverToBoxAdapter(
           child: FutureBuilder<List<SongInfo>>(
@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                 );
               }
               return Column(
-                children: List.generate(5, (index) => MusicItemView(songs: item.data!, index: index,)),
+                children: List.generate(7, (index) => MusicItemView(songs: item.data!, index: index,)),
               );
             },
           ),

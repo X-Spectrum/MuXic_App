@@ -2,6 +2,8 @@
 
 /*import 'package:audioplayers/audio_cache.dart';
 import 'package:audioplayers/audioplayers.dart';*/
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
@@ -28,13 +30,12 @@ class _musicPlayerState extends State<musicPlayer> {
 
   void initState() {
     super.initState();
-    player.load();
     setSong(widget.songs[widget.index]);
   }
 
   void dispose() {
     super.dispose();
-    //player.stop();
+    player.stop();
   }
 
   void setSong(SongInfo songInfo) async {
@@ -49,11 +50,9 @@ class _musicPlayerState extends State<musicPlayer> {
     isPlaying = false;
     changeStatus();
     player.positionStream.listen((duration) {
-      setState(() {
-        if (currentValue == maximumValue){
-          changeTrack(true);
-        }
-      });
+      if (currentValue == maximumValue){
+        changeTrack(true);
+      }
       currentValue = (duration.inMilliseconds.toDouble() < maximumValue)? duration.inMilliseconds.toDouble(): maximumValue;
       setState(() {
         currentTime = getDuration(currentValue);
@@ -148,7 +147,9 @@ class _musicPlayerState extends State<musicPlayer> {
                         color: Colors.grey,
                         size: 30,)
                   ):
-                  const Image(image: AssetImage("assets/Girl.webp")),
+                  Image(
+                    image: FileImage(File(widget.songs[index].albumArtwork)),
+                  ),
                   title: Text(widget.songs[index].title, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
                   subtitle: Text(widget.songs[index].artist, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300)),
                   trailing: IconButton(

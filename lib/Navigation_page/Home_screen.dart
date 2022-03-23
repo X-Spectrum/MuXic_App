@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:projet/Navigation_page/Favorite_page.dart';
+import 'package:projet/Navigation_page/Folder_contain.dart';
 import 'package:projet/Navigation_page/Folder_page.dart';
 import 'package:projet/Navigation_page/Home_page.dart';
 import 'package:projet/Navigation_page/Playlist_page.dart';
@@ -13,38 +14,40 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key, /*required this.index*/}) : super(key: key);
   //final int index;
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
+  String FolderPath = "";
+  int _currentIndex = 0, _currentIndex2 = 0;
 
-  int _currentIndex = 0;
-  /*Function setCurrentIndex(int newIndex){
-    _currentIndex = newIndex;
-  }*/
-  List pages = [
+  /*List pages = [
     const HomePage(),
     const SongsListPage(),
     const PlaylistPage(),
     const FavoriteListPage(),
-    const FolderListPage(),
-  ];
+    const FolderListPage(setHomeState: setCurrentIndex(index, path), ),
+  ];*/
 
-  /*@override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    pages = [
-      HomePage(moveToPage: setCurrentIndex(index)),
+  void setCurrentIndex(int index1, int index2, String path ){
+    setState(() {
+      _currentIndex = index1;
+      _currentIndex2 = index2;
+      FolderPath = path;
+      print("//////////////////$FolderPath////////////////");
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List pages = [
+      HomePage(setHomeState: setCurrentIndex),
       const SongsListPage(),
       const PlaylistPage(),
       const FavoriteListPage(),
-      const FolderListPage(),
-    ]
-  }*/
-  @override
-  Widget build(BuildContext context) {
-    Widget currentWidget = pages[_currentIndex];
+      FolderListPage(setHomeState: setCurrentIndex),
+      FolderContain(path: FolderPath)
+    ];
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
         unselectedFontSize: 0,
@@ -60,6 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onTap: (currentIndex){
           setState(() {
             _currentIndex = currentIndex;
+            _currentIndex2 = currentIndex;
           });
         },
         items: [
@@ -88,21 +92,24 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       backgroundColor: firstColor,
-      body: currentWidget,
+      body: pages[_currentIndex2],
       appBar: AppBar(
           centerTitle: true,
           backgroundColor: firstColor,
           elevation: 0,
           leading: Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              onPressed: (){},
-              splashRadius: 28.0,
-              splashColor: secondColor,
-              icon: const Icon(
-                Icons.menu,
-                size: 30,
-              ),
+            padding: const EdgeInsets.only(right: 10.0),
+            child: CircleAvatar(
+              backgroundImage: AssetImage("assets/img_2.png"),
+              /*child: IconButton(
+                onPressed: (){},
+                splashRadius: 28.0,
+                splashColor: secondColor,
+                icon: const Icon(
+                  Icons.menu,
+                  size: 30,
+                ),
+              ),*/
             ),
           ),
           title: const Text(

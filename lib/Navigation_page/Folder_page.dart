@@ -1,12 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:projet/Navigation_page/Folder_contain.dart';
+import 'package:projet/Navigation_page/Home_screen.dart';
 import 'package:projet/app_data.dart';
 import 'package:projet/musicItemView.dart';
 
 class FolderListPage extends StatefulWidget {
-  const FolderListPage({Key? key}) : super(key: key);
-
+  FolderListPage({Key? key, required this.setHomeState}) : super(key: key);
+  Function setHomeState;
   @override
   State<FolderListPage> createState() => _FolderListPageState();
 }
@@ -14,6 +16,15 @@ class FolderListPage extends StatefulWidget {
 class _FolderListPageState extends State<FolderListPage> {
   FlutterAudioQuery audioQuery = FlutterAudioQuery();
   List<String> paths = [];
+  final GlobalKey<HomeScreenState> cle = GlobalKey<HomeScreenState>();
+
+  void toFolderContain(String path){
+
+    /*Navigator.push(context, MaterialPageRoute(builder: (BuildContext context){
+      return HomeScreen(key: cle);
+    }));*/
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,6 +98,7 @@ class _FolderListPageState extends State<FolderListPage> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(15.0),
                               ),
+                              onTap: () => widget.setHomeState(4, 5, paths[index]),
                             ),
                           ),
                         );

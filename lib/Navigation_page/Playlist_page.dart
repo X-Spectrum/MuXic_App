@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:projet/app_data.dart';
 import 'package:projet/musicItemView.dart';
+import 'package:projet/playlistItemView.dart';
 
 class PlaylistPage extends StatefulWidget {
   const PlaylistPage({Key? key}) : super(key: key);
@@ -40,20 +42,21 @@ class _PlaylistPageState extends State<PlaylistPage> {
             ),
             Expanded(
               child: Container(
+                padding: EdgeInsets.all(10),
                 alignment: Alignment.center,
                 width: MediaQuery.of(context).size.width,
                 decoration: const BoxDecoration(
                   color: firstColor,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                 ),
-                child: const Text(
-                  "Playlist",
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  children: List.generate(6, (index) => const PlaylistItem()),
                 )
-              ),
-            )
+              )
+            ),
           ],
         ),
       ),
