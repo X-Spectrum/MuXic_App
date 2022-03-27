@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:just_audio/just_audio.dart';
+//import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:projet/Navigation_page/Home_screen.dart';
 import 'package:projet/Navigation_page/Song_page.dart';
+import 'package:projet/musicPlayer.dart';
 import 'package:projet/musicView.dart';
 
 import '../app_data.dart';
@@ -9,16 +12,17 @@ import '../musicItemView.dart';
 import '../playlistItemView.dart';
 
 class HomePage extends StatefulWidget {
-  HomePage({ Key? key, required this.setHomeState}) : super(key: key);
-
+  HomePage({ Key? key, required this.setHomeState, required this.player}) : super(key: key);
+  AudioPlayer player;
   Function setHomeState;
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  List<SongInfo> songInfo = [];
-  FlutterAudioQuery audioQuery = FlutterAudioQuery();
+  List<SongModel> songInfo = [];
+  OnAudioQuery audioQuery = OnAudioQuery();
+  final musicPlayer = AudioPlayer();
   @override
   void initState() {
     // TODO: implement initState
@@ -31,7 +35,10 @@ class _HomePageState extends State<HomePage> {
     return CustomScrollView(
       slivers: [
         SliverToBoxAdapter(
-          child: TextBox(title: "Playlist", fun: (){},),
+          child: TextBox(title: "Playlist", fun: (){
+            widget.setHomeState(2, 2, "");
+            //goTo(2);
+          },),
         ),
         SliverToBoxAdapter(
           child: SingleChildScrollView(
@@ -45,8 +52,8 @@ class _HomePageState extends State<HomePage> {
           widget.setHomeState(1, 1, "");
         },)),
         SliverToBoxAdapter(
-          child: FutureBuilder<List<SongInfo>>(
-            future: audioQuery.getSongs(),
+          child: FutureBuilder<List<SongModel>>(
+            future: audioQuery.querySongs(),
             builder: (context, item){
               if(item.data == null){
                 return const Center(
@@ -54,6 +61,11 @@ class _HomePageState extends State<HomePage> {
                 );
               }
               if(item.data!.isEmpty){
+                /*ConcatenatingAudioSource playlist = ConcatenatingAudioSource(children: []);
+                for (int i=0; i<item.data!.length; i++ ){
+                  playlist.add(AudioSource.uri(Uri.parse(item.data![i].uri.toString())));
+                }
+                musicPlayer.setAudioSource(playlist);*/
                 return const Center(
                   child: Text(
                     "Aucune chanson trouvée",
@@ -66,7 +78,7 @@ class _HomePageState extends State<HomePage> {
                 );
               }
               return Column(
-                children: List.generate(7, (index) => MusicItemView(songs: item.data!, index: index,)),
+                children: List.generate(7, (index) => MusicItemView(player: widget.player, songs: item.data!, index: index,)),
               );
             },
           ),
@@ -75,9 +87,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void toSongListPage(int index){
+  void goTo(int index){
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context){
-       return HomeScreen();
+       return HomeScreen(index: index,);
     }));
   }
 }

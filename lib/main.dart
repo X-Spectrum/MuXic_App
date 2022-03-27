@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Music Player',
-      home: HomeScreen(),
+      home: HomeScreen(index: 0,),
       debugShowCheckedModeBanner: false,
     );
   }

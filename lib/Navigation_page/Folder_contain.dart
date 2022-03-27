@@ -1,19 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:just_audio/just_audio.dart';
+//import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:projet/app_data.dart';
 import 'package:projet/musicItemView.dart';
 
 class FolderContain extends StatefulWidget {
-  const FolderContain({Key? key, required this.path}) : super(key: key);
+  FolderContain({Key? key, required this.path, required this.player}) : super(key: key);
   final String path;
+  AudioPlayer player;
   @override
   State<FolderContain> createState() => _FolderContainState();
 }
 
 class _FolderContainState extends State<FolderContain> {
-  FlutterAudioQuery audioQuery = FlutterAudioQuery();
-  List<SongInfo> songs = [];
+  OnAudioQuery audioQuery = OnAudioQuery();
+  List<SongModel> songs = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,21 +50,24 @@ class _FolderContainState extends State<FolderContain> {
                     color: firstColor,
                     borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  child: FutureBuilder<List<SongInfo>>(
-                    future: audioQuery.getSongs(),
+                  child: FutureBuilder<List<SongModel>>(
+                    future: audioQuery.querySongs(
+                      path: widget.path,
+                    ),
                     builder: (context, item){
                       if(item.data == null){
                         return const Center(child: CircularProgressIndicator());
                       }
                       if(item.data!.isNotEmpty){
-                        for(int i=0; i < item.data!.length; i++){
+                        print(item.data!.length);
+                        /*for(int i=0; i < item.data!.length; i++){
                           if(item.data![i].filePath.contains(widget.path)){
                             songs.add(item.data![i]);
                           }
-                        }
+                        }*/
                         return ListView.builder(
-                          itemCount: songs.length,
-                          itemBuilder: (context, index) => MusicItemView(songs: songs, index: index),
+                          itemCount: item.data!.length,
+                          itemBuilder: (context, index) => MusicItemView(player: widget.player, songs: item.data!, index: index),
                         );
                       }
                       return Container();

@@ -1,5 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 import 'package:projet/Navigation_page/Favorite_page.dart';
 import 'package:projet/Navigation_page/Folder_contain.dart';
 import 'package:projet/Navigation_page/Folder_page.dart';
@@ -7,12 +9,13 @@ import 'package:projet/Navigation_page/Home_page.dart';
 import 'package:projet/Navigation_page/Playlist_page.dart';
 import 'package:projet/Navigation_page/Song_page.dart';
 import 'package:projet/Navigation_page/search_page.dart';
+import 'package:projet/musicPlayer.dart';
 
 import '../app_data.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key, /*required this.index*/}) : super(key: key);
-  //final int index;
+  const HomeScreen({Key? key, required this.index}) : super(key: key);
+  final int index;
   @override
   State<HomeScreen> createState() => HomeScreenState();
 }
@@ -20,6 +23,26 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   String FolderPath = "";
   int _currentIndex = 0, _currentIndex2 = 0;
+
+  final OnAudioQuery _audioQuery = OnAudioQuery();
+  AudioPlayer mPlayer = AudioPlayer();
+
+  @override
+  void initState() {
+    super.initState();
+    requestPermission();
+    _currentIndex = widget.index;
+    setCurrentIndex(_currentIndex, _currentIndex, "");
+  }
+
+  requestPermission() async {
+    // Web platform don't support permissions methods.
+    bool permissionStatus = await _audioQuery.permissionsStatus();
+    if (!permissionStatus) {
+      await _audioQuery.permissionsRequest();
+    }
+    setState(() {});
+  }
 
   /*List pages = [
     const HomePage(),
@@ -40,13 +63,14 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    //_currentIndex= widget.index;
     List pages = [
-      HomePage(setHomeState: setCurrentIndex),
-      const SongsListPage(),
-      const PlaylistPage(),
-      const FavoriteListPage(),
-      FolderListPage(setHomeState: setCurrentIndex),
-      FolderContain(path: FolderPath)
+      HomePage(setHomeState: setCurrentIndex, player: mPlayer),
+      SongsListPage(player: mPlayer),
+      PlaylistPage(player: mPlayer),
+      FavoriteListPage(player: mPlayer),
+      FolderListPage(setHomeState: setCurrentIndex, player: mPlayer),
+      FolderContain(path: FolderPath, player: mPlayer)
     ];
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
@@ -97,8 +121,8 @@ class HomeScreenState extends State<HomeScreen> {
           centerTitle: true,
           backgroundColor: firstColor,
           elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.only(right: 10.0),
+          leading: const Padding(
+            padding: EdgeInsets.only(right: 10.0),
             child: CircleAvatar(
               backgroundImage: AssetImage("assets/img_2.png"),
               /*child: IconButton(
@@ -140,7 +164,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   void toSearch(){
     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context){
-      return SearchPage();
+      return SearchPage(player: mPlayer,);
     }));
   }
 }

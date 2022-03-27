@@ -1,18 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:on_audio_query/on_audio_query.dart';
+//import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:projet/app_data.dart';
 import 'package:projet/musicItemView.dart';
 
 class SongsListPage extends StatefulWidget {
-  const SongsListPage({Key? key}) : super(key: key);
-
+  SongsListPage({Key? key, required this.player}) : super(key: key);
+  AudioPlayer player;
   @override
   State<SongsListPage> createState() => _SongsListPageState();
 }
 
 class _SongsListPageState extends State<SongsListPage> {
-  FlutterAudioQuery audioQuery = FlutterAudioQuery();
+  OnAudioQuery audioQuery = OnAudioQuery();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -45,8 +47,8 @@ class _SongsListPageState extends State<SongsListPage> {
                   borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
                 ),
 
-                child: FutureBuilder<List<SongInfo>>(
-                  future: audioQuery.getSongs(),
+                child: FutureBuilder<List<SongModel>>(
+                  future: audioQuery.querySongs(),
                   builder: (context, item) {
                     if (item.data == null) {
                       return const Center(
@@ -59,7 +61,7 @@ class _SongsListPageState extends State<SongsListPage> {
                       );
                     }
                     return ListView.builder(
-                      itemBuilder: (context, index) => MusicItemView(songs: item.data!, index: index,),
+                      itemBuilder: (context, index) => MusicItemView(player: widget.player, songs: item.data!, index: index,),
                       itemCount: item.data!.length,
                     );
                   },

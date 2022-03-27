@@ -6,16 +6,18 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
+//import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:on_audio_query/on_audio_query.dart';
 
 import 'app_data.dart';
 import 'musicItemView.dart';
 
 class musicPlayer extends StatefulWidget {
-  musicPlayer({Key? key, required this.songs, required this.index}) : super(key: key);
-  List<SongInfo> songs;
+  musicPlayer({Key? key, required this.songs, required this.index, required this.player}) : super(key: key);
+  List<SongModel> songs;
   int index;
+  AudioPlayer player;
 
   @override
   State<musicPlayer> createState() => _musicPlayerState();
@@ -24,41 +26,76 @@ class musicPlayer extends StatefulWidget {
 class _musicPlayerState extends State<musicPlayer> {
   double minimumValue = 0.0, maximumValue = .0, currentValue = 0.0;
   String currentTime = '00:00', endTime = '00:00';
+  Widget artworkAudio = Icon(Icons.music_note_rounded);
+  ConcatenatingAudioSource playlist = ConcatenatingAudioSource(children: []);
   bool isPlaying = false;
+  List<IconData> repeatIcons = [Icons.repeat, Icons.repeat_one];
+  int loopType=0;
   bool checkModalSheet = false;
-  final AudioPlayer player = AudioPlayer();
+  AudioPlayer player = AudioPlayer();
 
   void initState() {
     super.initState();
-    setSong(widget.songs[widget.index]);
+    setSong();
+    setArtwork();
+  }
+
+  void setArtwork(){
+    artworkAudio = QueryArtworkWidget(
+      id: widget.songs[widget.index].id,
+      type: ArtworkType.AUDIO,
+      nullArtworkWidget: const Icon(
+        Icons.music_note_rounded,
+        color: Colors.grey,
+        size: 100,),
+      artworkBorder: BorderRadius.circular(30.0),
+    );
   }
 
   void dispose() {
     super.dispose();
-    player.stop();
   }
 
-  void setSong(SongInfo songInfo) async {
-    widget.songs[widget.index] = songInfo;
-    await player.setUrl(widget.songs[widget.index].uri);
+  void setSong() async {
+    player = widget.player;
+
+    for (int i=0; i<widget.songs.length; i++ ){
+      playlist.add(AudioSource.uri(Uri.parse(widget.songs[i].uri.toString())));
+    }
+    await player.setAudioSource(playlist);
+    await player.seek(Duration(milliseconds: 0), index: widget.index);
+
     currentValue = minimumValue;
-    maximumValue = (currentValue > maximumValue) ? maximumValue = currentValue : player.duration!.inMilliseconds.toDouble();
-    setState(() {
-      currentTime = getDuration(currentValue);
-      endTime = getDuration(maximumValue);
-    });
+    maximumValue = player.duration!.inMilliseconds.toDouble();
+    currentTime = getDuration(currentValue);
+    endTime = getDuration(maximumValue);
     isPlaying = false;
     changeStatus();
     player.positionStream.listen((duration) {
-      if (currentValue == maximumValue){
-        changeTrack(true);
-      }
-      currentValue = (duration.inMilliseconds.toDouble() < maximumValue)? duration.inMilliseconds.toDouble(): maximumValue;
+      currentValue = duration.inMilliseconds.toDouble() ;
       setState(() {
         currentTime = getDuration(currentValue);
+        endTime = getDuration(maximumValue);
       });
+      if(player.currentIndex != widget.index){
+        updateDuration();
+        setState(() {
+          widget.index = player.currentIndex!;
+          setArtwork();
+        });
+      }
     });
   }
+
+  void updateDuration(){
+    currentValue = minimumValue;
+    maximumValue = player.duration!.inMilliseconds.toDouble();
+    setState(() {
+      endTime = getDuration(maximumValue);
+    });
+  }
+
+
 
   void changeStatus() {
     setState(() {
@@ -79,6 +116,11 @@ class _musicPlayerState extends State<musicPlayer> {
         .join(':');
   }
 
+  void seek(int index) async{
+    await player.seek(Duration(milliseconds: 0), index: widget.index);
+    updateDuration();
+  }
+
   Widget slider() {
     return Slider.adaptive(
       activeColor: thirdColor,
@@ -88,29 +130,42 @@ class _musicPlayerState extends State<musicPlayer> {
       value: currentValue,
       onChanged: (value) {
         currentValue = value;
+        if(player.currentIndex != widget.index){
+          updateDuration();
+          setState(() {
+            widget.index = player.currentIndex!;
+            setArtwork();
+          });
+        }
         player.seek(Duration(milliseconds: currentValue.round()));
       },
     );
   }
-  void changeTrack(bool isNext) {
-    if (isNext) {
-      if (widget.index != widget.songs.length - 1) {
+
+  void seekToNext()async{
+    if (player.hasNext){
+      await player.seekToNext();
+      updateDuration();
+      setState(() {
+        widget.index = player.currentIndex!;
+        setArtwork();
+      });
+    }
+  }
+
+  void seekToPrevious()async{
+    if (currentValue >= minimumValue + 3000.0){
+      await player.seek(Duration(milliseconds: 0), index: widget.index);
+    }else {
+      if (player.hasNext) {
+        await player.seekToPrevious();
+        updateDuration();
         setState(() {
-          widget.index++;
+          widget.index = player.currentIndex!;
+          setArtwork();
         });
       }
-    } else {
-      if (currentValue >= minimumValue + 3000.0){
-        currentValue = minimumValue;
-      }else{
-        if (widget.index != 0) {
-          setState(() {
-            widget.index--;
-          });
-        }
-      }
     }
-    setSong(widget.songs[widget.index]);
   }
 
   void _showModalBottomSheet(BuildContext context){
@@ -134,31 +189,37 @@ class _musicPlayerState extends State<musicPlayer> {
               itemBuilder: (context, index) => Container(
                 padding: EdgeInsets.symmetric(horizontal: 5.0),
                 child: ListTile(
-                  leading: (widget.songs[index].albumArtwork == null) ?
-                  Container(
-                      width: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
-                      height: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: secondColor,
-                      ),
-                      child: const Icon(
-                        Icons.music_note_rounded,
-                        color: Colors.grey,
-                        size: 30,)
-                  ):
-                  Image(
-                    image: FileImage(File(widget.songs[index].albumArtwork)),
+                  leading: QueryArtworkWidget(
+                    id: widget.songs[index].id,
+                    type: ArtworkType.AUDIO,
+                    nullArtworkWidget: Container(
+                        width: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                        height: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15.0),
+                          color: secondColor,
+                        ),
+                        child: const Icon(
+                          Icons.music_note_rounded,
+                          color: Colors.grey,
+                          size: 30,)
+                    ),
+                    artworkBorder: BorderRadius.circular(15),
+                    artworkWidth: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
+                    artworkHeight: (MediaQuery.of(context).orientation == Orientation.portrait) ? MediaQuery.of(context).size.width / 7.0 : MediaQuery.of(context).size.width / 12.0,
                   ),
                   title: Text(widget.songs[index].title, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500)),
-                  subtitle: Text(widget.songs[index].artist, overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300)),
+                  subtitle: Text(widget.songs[index].artist ?? "Inconnu", overflow: TextOverflow.ellipsis ,style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w300)),
                   trailing: IconButton(
                     onPressed: (){},
                     icon: const Icon(Icons.more_vert_rounded, color: Colors.white,),
                   ),
                   onTap: (){
                     Navigator.pop(context);
-                    setSong(widget.songs[index]);
+                    setState(() {
+                      widget.index = index;
+                    });
+                    seek(index);
                   },
                   contentPadding: EdgeInsets.symmetric(horizontal: 5.0),
                   shape: RoundedRectangleBorder(
@@ -229,10 +290,7 @@ class _musicPlayerState extends State<musicPlayer> {
                             borderRadius: BorderRadius.circular(30.0),
                             color: secondColor,
                           ),
-                          child: const Icon(
-                            Icons.music_note_rounded,
-                            color: Colors.grey,
-                            size: 100,)
+                          child: artworkAudio,
                       ),
                       /*Container(
                         margin: EdgeInsets.only(top: 15.0, bottom: 25.0),
@@ -269,7 +327,7 @@ class _musicPlayerState extends State<musicPlayer> {
                             ),
                             SizedBox(height: 7.0),
                             Text(
-                              widget.songs[widget.index].artist,
+                              widget.songs[widget.index].artist ?? "Inconnu",
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
                                   color: Colors.white,
@@ -329,16 +387,21 @@ class _musicPlayerState extends State<musicPlayer> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       IconButton(
-                        icon: Icon(Icons.loop_rounded),
-                        onPressed: (){},
+                        icon: (loopType == 2) ? Icon(repeatIcons[1]): Icon(repeatIcons[0]),
+                        onPressed: (){
+                          setState(() {
+                            loopType++;
+                            if(loopType>2){
+                              loopType = 0;
+                            }
+                          });
+                        },
                         iconSize: 35,
-                        color: Colors.white,
+                        color: (loopType == 0) ? Colors.white: thirdColor,
                       ),
                       IconButton(
                         icon: Icon(Icons.skip_previous_rounded),
-                        onPressed: (){
-                          changeTrack(false);
-                        },
+                        onPressed: () => seekToPrevious(),
                         iconSize: 35,
                         color: Colors.white,
                       ),
@@ -363,15 +426,17 @@ class _musicPlayerState extends State<musicPlayer> {
                       ),
                       IconButton(
                         icon: Icon(Icons.skip_next_rounded),
-                        onPressed: ()=>changeTrack(true),
+                        onPressed: () => seekToNext(),
                         iconSize: 35,
                         color: Colors.white,
                       ),
                       IconButton(
                         icon: Icon(Icons.shuffle_rounded),
-                        onPressed: (){},
+                        onPressed: (){
+                          player.setShuffleModeEnabled(!player.shuffleModeEnabled);
+                        },
                         iconSize: 35,
-                        color: Colors.white,
+                        color: (player.shuffleModeEnabled) ? thirdColor : Colors.white,
                       )
                     ],
                   ),

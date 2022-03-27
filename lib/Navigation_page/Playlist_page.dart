@@ -1,20 +1,22 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_audio_query/flutter_audio_query.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:on_audio_query/on_audio_query.dart';
+//import 'package:flutter_audio_query/flutter_audio_query.dart';
 import 'package:projet/app_data.dart';
 import 'package:projet/musicItemView.dart';
 import 'package:projet/playlistItemView.dart';
 
 class PlaylistPage extends StatefulWidget {
-  const PlaylistPage({Key? key}) : super(key: key);
-
+  PlaylistPage({Key? key, required this.player}) : super(key: key);
+  AudioPlayer player;
   @override
   State<PlaylistPage> createState() => _PlaylistPageState();
 }
 
 class _PlaylistPageState extends State<PlaylistPage> {
-  FlutterAudioQuery audioQuery = FlutterAudioQuery();
+  OnAudioQuery audioQuery = OnAudioQuery();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
